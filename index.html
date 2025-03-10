@@ -13,25 +13,40 @@
 
     <style>
         body, html { margin: 0; padding: 0; width: 100%; height: 100%; font-family: Arial, sans-serif; }
-        #map { height: 90vh; width: 100%; }
+        #map { height: 85vh; width: 100%; }
         h2 { text-align: center; padding: 10px; font-size: 18px; background: #007bff; color: white; margin: 0; }
-        #searchBox { 
-            width: 90%; max-width: 400px; margin: 10px auto; padding: 10px; border: 1px solid #ccc;
-            border-radius: 5px; display: block; font-size: 16px; text-align: center;
+
+        /* Search Box & Dropdown */
+        #searchContainer { position: relative; text-align: center; margin: 10px auto; width: 90%; max-width: 400px; }
+        #searchBox {
+            width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 5px;
+            font-size: 16px; text-align: center;
         }
-        .leaflet-label { background: white; padding: 2px 5px; border-radius: 3px; font-size: 12px; }
+        #searchResults {
+            position: absolute; width: 100%; max-height: 150px; overflow-y: auto;
+            border: 1px solid #ccc; background: white; display: none; z-index: 1000;
+        }
+        .search-item {
+            padding: 8px; cursor: pointer; text-align: left;
+        }
+        .search-item:hover { background: #f1f1f1; }
     </style>
 </head>
 <body>
 
     <h2>Emergency Services in Adityapur & Jamshedpur</h2>
-    <input type="text" id="searchBox" placeholder="Search for a service...">
+    
+    <div id="searchContainer">
+        <input type="text" id="searchBox" placeholder="Search for a service...">
+        <div id="searchResults"></div>
+    </div>
+
     <div id="map"></div>
 
     <script>
         var map = L.map('map').setView([22.80222549, 86.13745], 13);
 
-        L.tileLayer('http://mt0.google.com/vt/lyrs=m&hl=en&x={x}&y={y}&z={z}', {
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
             attribution: '© OpenStreetMap contributors'
         }).addTo(map);
 
@@ -47,44 +62,58 @@
             ["Netaji Subhas Medical College & Hospital", 22.80222549, 86.13745, "hospital", "9876543210"],
             ["Ganga Ram Das Hospital", 22.78947182, 86.15494, "hospital", "9876543211"],
             ["Siddhesh Hospital", 22.78849693, 86.16777, "hospital", "9876543212"],
-            ["Arogyam Care", 22.78730996, 86.16313, "hospital", "9876543213"],
-            ["111 Save Life Hospital", 22.78153324, 86.16313, "hospital", "9876543214"],
-            ["Meditrina Hospital", 22.78802214, 86.1691, "hospital", "9876543215"],
-            ["Kantilal Gandhi Hospital", 22.78750779, 86.17772, "hospital", "9876543216"],
-            ["Tata Main Hospital", 22.80249505, 86.17969, "hospital", "9876543217"],
+
             ["Adityapur Police Station", 22.7845383, 86.163, "police", "100"],
-            ["Gamharia Thana", 22.83177187, 86.08271, "police", "101"],
-            ["Adityapur Thana 2", 22.81639642, 86.10207, "police", "102"],
-            ["Kandra Police Station", 22.8557856, 86.05071, "police", "103"],
-            ["Rohit Singh Ambulance Service", 22.7732752, 86.15854, "ambulance", "9876543218"],
-            ["RED Ambulance Service", 22.79479949, 86.14412, "ambulance", "9876543219"],
-            ["Fire Station Adityapur", 22.79375921, 86.15244, "fire", "104"],
-            ["Fire Station Jamshedpur", 22.79978714, 86.21725, "fire", "105"],
-            ["Jamshedpur Blood Bank", 22.80573476, 86.18173, "hospital", "9876543220"],
-            ["Indian Red Cross Society", 22.79409109, 86.1831, "hospital", "9876543221"]
+            ["Bistupur Police Station", 22.793757, 86.201228, "police", "100"],
+
+            ["Fire Station Adityapur", 22.79375921, 86.15244, "fire", "101"],
+            ["Fire Station Bistupur", 22.789500, 86.200987, "fire", "101"],
+
+            ["Rohit Singh Ambulance Service", 22.7732752, 86.15854, "ambulance", "9876543218"]
         ];
 
         var markers = [];
+        var userLocation = null;
+
+        function calculateDistance(lat1, lon1, lat2, lon2) {
+            var R = 6371;
+            var dLat = (lat2 - lat1) * Math.PI / 180;
+            var dLon = (lon2 - lon1) * Math.PI / 180;
+            var a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+                    Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+                    Math.sin(dLon / 2) * Math.sin(dLon / 2);
+            var c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+            return (R * c).toFixed(2);
+        }
 
         locations.forEach(function (loc) {
-            var googleMapsLink = `https://www.google.com/maps?q=${loc[1]},${loc[2]}`;
             var marker = L.marker([loc[1], loc[2]], { icon: icons[loc[3]] }).addTo(map);
+
+            marker.bindPopup("<b>" + loc[0] + "</b><br>📞 <a href='tel:" + loc[4] + "'>" + loc[4] + "</a><br>" +
+                             "📍 <a href='https://www.google.com/maps?q=" + loc[1] + "," + loc[2] + "' target='_blank'>View on Google Maps</a>");
+
+            L.marker([loc[1], loc[2]], { icon: icons[loc[3]] }).bindTooltip(loc[0], { permanent: true, direction: "top" }).addTo(map);
             
-            var label = L.divIcon({
-                className: 'leaflet-label',
-                html: `<b>${loc[0]}</b>`,
-                iconSize: [100, 20]
+            markers.push({ marker: marker, name: loc[0].toLowerCase(), lat: loc[1], lon: loc[2], phone: loc[4] });
+
+            marker.on('click', function () {
+                if (userLocation) {
+                    var distance = calculateDistance(userLocation[0], userLocation[1], loc[1], loc[2]);
+                    marker.setPopupContent("<b>" + loc[0] + "</b><br>" +
+                        "📞 <a href='tel:" + loc[4] + "'>" + loc[4] + "</a><br>" +
+                        "📍 <a href='https://www.google.com/maps?q=" + loc[1] + "," + loc[2] + "' target='_blank'>View on Google Maps</a><br>" +
+                        "📏 Distance: " + distance + " km");
+                }
+                marker.openPopup();
             });
-
-            L.marker([loc[1], loc[2]], { icon: label }).addTo(map);
-
-            markers.push({ marker: marker, name: loc[0].toLowerCase(), lat: loc[1], lon: loc[2] });
         });
 
         var userMarker;
         function updateLocation(position) {
             var lat = position.coords.latitude;
             var lng = position.coords.longitude;
+
+            userLocation = [lat, lng];
 
             if (userMarker) {
                 userMarker.setLatLng([lat, lng]);
@@ -95,11 +124,6 @@
             }
 
             map.setView([lat, lng], 14);
-
-            markers.forEach(function (item) {
-                var distance = getDistance(lat, lng, item.lat, item.lon);
-                item.marker.bindTooltip(`<b>${item.name}</b><br>📏 ${distance.toFixed(2)} km away`, { permanent: true, direction: "right" });
-            });
         }
 
         function errorLocation() {
@@ -108,32 +132,28 @@
 
         if (navigator.geolocation) {
             navigator.geolocation.watchPosition(updateLocation, errorLocation, { enableHighAccuracy: true });
-        } else {
-            alert("Geolocation is not supported by your browser.");
-        }
-
-        function getDistance(lat1, lon1, lat2, lon2) {
-            var R = 6371; // Radius of Earth in km
-            var dLat = (lat2 - lat1) * Math.PI / 180;
-            var dLon = (lon2 - lon1) * Math.PI / 180;
-            var a = Math.sin(dLat/2) * Math.sin(dLat/2) +
-                    Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
-                    Math.sin(dLon/2) * Math.sin(dLon/2);
-            var c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-            return R * c;
         }
 
         document.getElementById("searchBox").addEventListener("keyup", function () {
             var searchText = this.value.toLowerCase();
-            markers.forEach(function (item) {
-                if (item.name.includes(searchText)) {
-                    map.setView(item.marker.getLatLng(), 14);
-                    item.marker.openPopup();
-                }
-            });
+            var resultsDiv = document.getElementById("searchResults");
+            resultsDiv.innerHTML = ""; resultsDiv.style.display = "none";
+
+            if (searchText.length > 0) {
+                markers.forEach(function (item) {
+                    if (item.name.includes(searchText)) {
+                        var div = document.createElement("div");
+                        div.className = "search-item"; div.textContent = item.name;
+                        div.onclick = function () { map.setView(item.marker.getLatLng(), 15); item.marker.openPopup(); };
+                        resultsDiv.appendChild(div);
+                        resultsDiv.style.display = "block";
+                    }
+                });
+            }
         });
 
     </script>
 
 </body>
 </html>
+
