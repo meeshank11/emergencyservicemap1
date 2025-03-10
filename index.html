@@ -34,7 +34,7 @@
 </head>
 <body>
 
-    <h2>Emergency Services Near Tata Steel UISL Ph#1 S/S</h2>
+    <h2>Emergency Services in Adityapur & Jamshedpur</h2>
     
     <div id="searchContainer">
         <input type="text" id="searchBox" placeholder="Search for a service...">
@@ -46,7 +46,7 @@
     <script>
         var map = L.map('map').setView([22.80222549, 86.13745], 13);
 
-        L.tileLayer('http://mt0.google.com/vt/lyrs=s&hl=en&x={x}&y={y}&z={z}', {
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
             attribution: '© OpenStreetMap contributors'
         }).addTo(map);
 
@@ -59,62 +59,56 @@
         };
 
         var locations = [
-            ["Netaji Subhas Medical College & Hospital", 22.80195945370635, 86.13745235570785, "hospital", "9876543210"],
-            ["Ganga Ram Das Hospital", 22.788257434116655, 86.15540396221641, "hospital", "9234367127"],
-            ["Siddhesh Hospital", 22.787965017042342, 86.1679230366521, "hospital", "06572371994"],
-            ["Arogyam Care", 22.786925594837804, 86.1629071173439, "hospital", "09934157000"],
-            ["111 Save Life Hospital", 22.78153324, 86.16313, "hospital", "08210102212"],
-            ["Meditrina Hospital", 22.78802214, 86.1691, "hospital", "9534343434"],
-            ["Kantilal Gandhi Hospital", 22.78750779, 86.17772, "hospital", "08797110700"],
-            ["Tata Main Hospital", 22.801547197681046, 86.17974662705578, "hospital", "06576641122"],
-            ["Adityapur Police Station", 22.7845383, 86.163, "police", "0657 237 2666"],
-            ["Gamharia Thana", 22.83177187, 86.08271, "police", "096532 53698"],
-            ["Adityapur Thana 2", 22.81639642, 86.10207, "police", "09431706535"],
-            ["Kandra Police Station", 22.8557856, 86.05071, "police", "06597-255380"],
-            ["Rohit Singh Ambulance Service", 22.7732752, 86.15854, "ambulance", "9876543218"],
-            ["RED Ambulance Service", 22.79479949, 86.14412, "ambulance", "040 4189 1299"],
-	        ["TMH Ambulance Service", 22.801553379184753, 86.17997930868256, "ambulance", "06576641233"],
-            ["Fire Station Adityapur", 22.790380715813775, 86.15281465157102, "fire", "9304953415"],
-            ["Fire Station Jamshedpur", 22.79978714, 86.21725, "fire", "06572431036"],
-            ["Jamshedpur Blood Bank", 22.80573476, 86.18173, "hospital", "06572431957"],
-            ["Indian Red Cross Society", 22.79409109, 86.1831, "hospital", "09431303933"]
+            ["Netaji Subhas Medical College & Hospital", 22.80222549, 86.13745, "hospital", "9876543210"],
+            ["Ganga Ram Das Hospital", 22.78947182, 86.15494, "hospital", "9876543211"],
+            ["Siddhesh Hospital", 22.78849693, 86.16777, "hospital", "9876543212"],
 
+            ["Adityapur Police Station", 22.7845383, 86.163, "police", "100"],
+            ["Bistupur Police Station", 22.793757, 86.201228, "police", "100"],
+
+            ["Fire Station Adityapur", 22.79375921, 86.15244, "fire", "101"],
+            ["Fire Station Bistupur", 22.789500, 86.200987, "fire", "101"],
+
+            ["Rohit Singh Ambulance Service", 22.7732752, 86.15854, "ambulance", "9876543218"]
         ];
 
         var markers = [];
         var userLocation = null;
 
         function calculateDistance(lat1, lon1, lat2, lon2) {
-            var R = 6371;
+            var R = 6371; // Radius of Earth in km
             var dLat = (lat2 - lat1) * Math.PI / 180;
             var dLon = (lon2 - lon1) * Math.PI / 180;
             var a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
                     Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
                     Math.sin(dLon / 2) * Math.sin(dLon / 2);
             var c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-            return (R * c).toFixed(2);
+            return (R * c).toFixed(2); // Distance in km
+        }
+
+        function updatePopups() {
+            markers.forEach(function (item) {
+                if (userLocation) {
+                    var distance = calculateDistance(userLocation[0], userLocation[1], item.lat, item.lon);
+                    item.marker.bindPopup(`
+                        <b>${item.name}</b><br>
+                        📞 <a href="tel:${item.phone}">${item.phone}</a><br>
+                        📍 <a href="https://www.google.com/maps?q=${item.lat},${item.lon}" target="_blank">View on Google Maps</a><br>
+                        📏 Distance: ${distance} km
+                    `);
+                }
+            });
         }
 
         locations.forEach(function (loc) {
             var marker = L.marker([loc[1], loc[2]], { icon: icons[loc[3]] }).addTo(map);
-
+            
             marker.bindPopup("<b>" + loc[0] + "</b><br>📞 <a href='tel:" + loc[4] + "'>" + loc[4] + "</a><br>" +
                              "📍 <a href='https://www.google.com/maps?q=" + loc[1] + "," + loc[2] + "' target='_blank'>View on Google Maps</a>");
-
-            L.marker([loc[1], loc[2]], { icon: icons[loc[3]] }).bindTooltip(loc[0], { permanent: true, direction: "top" }).addTo(map);
+            
+            L.marker([loc[1], loc[2]], { icon: icons[loc[3]] }).bindTooltip(loc[0], { permanent: true, direction: "top", className: "label" }).addTo(map);
             
             markers.push({ marker: marker, name: loc[0].toLowerCase(), lat: loc[1], lon: loc[2], phone: loc[4] });
-
-            marker.on('click', function () {
-                if (userLocation) {
-                    var distance = calculateDistance(userLocation[0], userLocation[1], loc[1], loc[2]);
-                    marker.setPopupContent("<b>" + loc[0] + "</b><br>" +
-                        "📞 <a href='tel:" + loc[4] + "'>" + loc[4] + "</a><br>" +
-                        "📍 <a href='https://www.google.com/maps?q=" + loc[1] + "," + loc[2] + "' target='_blank'>View on Google Maps</a><br>" +
-                        "📏 Distance: " + distance + " km");
-                }
-                marker.openPopup();
-            });
         });
 
         var userMarker;
@@ -133,6 +127,7 @@
             }
 
             map.setView([lat, lng], 14);
+            updatePopups();
         }
 
         function errorLocation() {
@@ -141,22 +136,9 @@
 
         if (navigator.geolocation) {
             navigator.geolocation.watchPosition(updateLocation, errorLocation, { enableHighAccuracy: true });
-        } else {
-            alert("Geolocation is not supported by your browser.");
         }
 
-        function getDistance(lat1, lon1, lat2, lon2) {
-            var R = 6371; // Radius of Earth in km
-            var dLat = (lat2 - lat1) * Math.PI / 180;
-            var dLon = (lon2 - lon1) * Math.PI / 180;
-            var a = Math.sin(dLat/2) * Math.sin(dLat/2) +
-                    Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
-                    Math.sin(dLon/2) * Math.sin(dLon/2);
-            var c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-            return R * c;
-        }
-
-
+        // Search functionality
         document.getElementById("searchBox").addEventListener("keyup", function () {
             var searchText = this.value.toLowerCase();
             var resultsDiv = document.getElementById("searchResults");
