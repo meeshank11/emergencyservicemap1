@@ -69,6 +69,17 @@
             transform: translateY(-2px); box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
         }
 
+        /* Blinking animation for substation markers */
+        .blinking-substation {
+            animation: blink 1s infinite;
+        }
+
+        @keyframes blink {
+            0% { opacity: 1; }
+            50% { opacity: 0.3; }
+            100% { opacity: 1; }
+        }
+
         @media (max-width: 600px) {
             h2 { font-size: 1.2rem; padding: 10px; }
             #searchContainer { width: 85%; flex-direction: column; gap: 5px; }
@@ -140,8 +151,12 @@
             fire: L.icon({ iconUrl: 'https://img.icons8.com/color/48/fire-truck.png', iconSize: [20, 20] }),
             ambulance: L.icon({ iconUrl: 'https://img.icons8.com/color/48/ambulance.png', iconSize: [20, 20] }),
             location: L.icon({ iconUrl: 'https://img.icons8.com/color/48/street-view.png', iconSize: [25, 25] }),
-            tsuilHelp: L.icon({ iconUrl: 'https://img.icons8.com/?size=100&id=ATQuq8I4Ff5E&format=png&color=000000', iconSize: [25, 25] }),
-            substation: L.icon({ iconUrl: 'https://img.icons8.com/?size=100&id=92Fpvoa9FSsP&format=png&color=000000', iconSize: [20, 20] }),
+            tsuilHelp: L.icon({ iconUrl: 'https://img.icons8.com/?size=100&id=ATQuq8I4Ff5E&format=png&color=00FF00', iconSize: [25, 25] }),
+            substation: L.icon({ 
+                iconUrl: 'https://img.icons8.com/?size=100&id=92Fpvoa9FSsP&format=png&color=00FF00', 
+                iconSize: [20, 20],
+                className: 'blinking-substation'
+            }),
             office: L.icon({ iconUrl: 'https://img.icons8.com/?size=100&id=xQhdw8TF7PO2&format=png&color=000000', iconSize: [20, 20] })
         };
 
