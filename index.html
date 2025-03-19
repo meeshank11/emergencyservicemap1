@@ -11,51 +11,138 @@
     <!-- Leaflet JS -->
     <script src="https://unpkg.com/leaflet@1.9.3/dist/leaflet.js"></script>
 
-    <style>
-        body, html { margin: 0; padding: 0; width: 100%; height: 100%; font-family: Arial, sans-serif; }
-        #map { height: 85vh; width: 100%; }
-        h2 { text-align: center; padding: 10px; font-size: 18px; background: #007bff; color: white; margin: 0; }
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
 
-        /* Search Box & Dropdown */
-        #searchContainer { position: relative; text-align: center; margin: 10px auto; width: 90%; max-width: 400px; }
-        #searchBox {
-            width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 5px;
-            font-size: 16px; text-align: center;
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body, html { width: 100%; height: 100%; font-family: 'Poppins', sans-serif; background: #f0f2f5; }
+       
+        h2 {
+            text-align: center; padding: 15px; font-size: 1.5rem; font-weight: 600;
+            background: linear-gradient(90deg, #007bff, #00c4ff); color: white;
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.2);
         }
+        #map {
+            height: calc(100vh - 200px); width: 100%; border-radius: 10px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1); margin-top: 10px;
+        }
+        #searchContainer {
+            position: relative; text-align: center; margin: 15px auto; width: 90%; max-width: 500px;
+            z-index: 1000; display: flex; justify-content: center; gap: 10px;
+        }
+        #searchBox {
+            width: 70%; padding: 12px; border: none; border-radius: 25px;
+            font-size: 1rem; text-align: center; box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease; background: rgba(255, 255, 255, 0.9);
+        }
+        #searchBox:focus { outline: none; box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2); }
         #searchResults {
-            position: absolute; width: 100%; max-height: 150px; overflow-y: auto;
-            border: 1px solid #ccc; background: white; display: none; z-index: 1000;
+            position: absolute; width: 70%; max-height: 200px; overflow-y: auto;
+            border-radius: 10px; background: white; box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+            display: none; z-index: 1001; margin-top: 45px; left: 50%; transform: translateX(-50%);
         }
         .search-item {
-            padding: 8px; cursor: pointer; text-align: left;
+            padding: 10px 15px; cursor: pointer; text-align: left; font-size: 0.9rem;
+            border-bottom: 1px solid #eee; transition: background 0.2s ease;
         }
-        .search-item:hover { background: #f1f1f1; }
+        .search-item:last-child { border-bottom: none; }
+        .search-item:hover { background: #e9ecef; }
+        #filterSelect {
+            padding: 10px; border: none; border-radius: 25px; font-size: 1rem;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1); background: rgba(255, 255, 255, 0.9);
+            cursor: pointer;
+        }
+        #buttonContainer {
+            text-align: center; margin: 10px auto; padding: 10px;
+            background: url('https://img.icons8.com/color/48/emergency-exit.png') center/cover no-repeat,
+                        linear-gradient(90deg, rgba(255, 255, 255, 0.8), rgba(255, 255, 255, 0.8));
+            background-blend-mode: overlay; height: 60px;
+        }
+        #locateButton, #toggleMapButton {
+            padding: 10px 20px; background: linear-gradient(90deg, #28a745, #34c759);
+            color: white; border: none; border-radius: 25px; cursor: pointer;
+            font-size: 1rem; font-weight: 600; box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+            transition: all 0.3s ease; margin: 0 10px; display: inline-block;
+        }
+        #locateButton:hover, #toggleMapButton:hover {
+            transform: translateY(-2px); box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+        }
+
+        @media (max-width: 600px) {
+            h2 { font-size: 1.2rem; padding: 10px; }
+            #searchContainer { width: 85%; flex-direction: column; gap: 5px; }
+            #searchBox { width: 100%; font-size: 0.9rem; padding: 10px; }
+            #searchResults { width: 100%; margin-top: 70px; }
+            #filterSelect { font-size: 0.9rem; padding: 8px; }
+            #locateButton, #toggleMapButton { font-size: 0.85rem; padding: 8px 15px; margin: 0 5px; }
+            #map { height: calc(100vh - 180px); }
+            #buttonContainer { height: 50px; }
+            .search-item { font-size: 0.85rem; padding: 8px 12px; }
+        }
     </style>
 </head>
 <body>
-
-    <h2>Emergency Services near Tata Steel UISL Phase#1 S/S</h2>
-    
+    <h2>Emergency Contacts Near Me</h2>
+   
     <div id="searchContainer">
-        <input type="text" id="searchBox" placeholder="Search for a service...">
+        <input type="text" id="searchBox" placeholder="Search for a service or location...">
+        <select id="filterSelect" onchange="filterMarkers()">
+            <option value="all">All Categories</option>
+            <option value="hospital">Hospital</option>
+            <option value="ambulance">Ambulance</option>
+            <option value="substation">Sub-station</option>
+            <option value="office">Offices</option>
+            <option value="police">Police</option>
+            <option value="fire">Fire</option>
+            <option value="tsuilHelp">TSUISL Help</option>
+        </select>
         <div id="searchResults"></div>
     </div>
-
+   
+    <div id="buttonContainer">
+        <button id="locateButton" onclick="locateUser()">Locate Me</button>
+        <button id="toggleMapButton" onclick="toggleBaseMap()">Switch to Map</button>
+    </div>
+   
     <div id="map"></div>
 
     <script>
         var map = L.map('map').setView([22.80222549, 86.13745], 13);
 
-        L.tileLayer('http://www.google.cn/maps/vt?lyrs=s@189&gl=cn&x={x}&y={y}&z={z}', {
+        var satelliteLayer = L.tileLayer('http://www.google.cn/maps/vt?lyrs=s@189&gl=cn&x={x}&y={y}&z={z}', {
+            attribution: '© Google Satellite'
+        });
+        var osmLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
             attribution: '© OpenStreetMap contributors'
-        }).addTo(map);
+        });
+
+        satelliteLayer.addTo(map);
+        var currentLayer = 'satellite';
+
+        function toggleBaseMap() {
+            if (currentLayer === 'satellite') {
+                map.removeLayer(satelliteLayer);
+                osmLayer.addTo(map);
+                currentLayer = 'osm';
+                document.getElementById('toggleMapButton').textContent = 'Switch to Satellite';
+            } else {
+                map.removeLayer(osmLayer);
+                satelliteLayer.addTo(map);
+                currentLayer = 'satellite';
+                document.getElementById('toggleMapButton').textContent = 'Switch to Map';
+            }
+        }
 
         var icons = {
             hospital: L.icon({ iconUrl: 'https://img.icons8.com/color/48/hospital.png', iconSize: [20, 20] }),
-            police: L.icon({ iconUrl: 'https://img.icons8.com/color/48/police-badge.png', iconSize: [20, 20] }),
+            police: L.icon({ iconUrl: 'https://img.icons8.com/?size=100&id=iW12HY4fTGHh&format=png&color=000000', iconSize: [20, 20] }),
             fire: L.icon({ iconUrl: 'https://img.icons8.com/color/48/fire-truck.png', iconSize: [20, 20] }),
             ambulance: L.icon({ iconUrl: 'https://img.icons8.com/color/48/ambulance.png', iconSize: [20, 20] }),
-            location: L.icon({ iconUrl: 'https://img.icons8.com/color/48/street-view.png', iconSize: [25, 25] })
+            location: L.icon({ iconUrl: 'https://img.icons8.com/color/48/street-view.png', iconSize: [25, 25] }),
+            tsuilHelp: L.icon({ iconUrl: 'https://img.icons8.com/?size=100&id=ATQuq8I4Ff5E&format=png&color=000000', iconSize: [25, 25] }),
+            substation: L.icon({ iconUrl: 'https://img.icons8.com/?size=100&id=92Fpvoa9FSsP&format=png&color=000000', iconSize: [20, 20] }),
+            office: L.icon({ iconUrl: 'https://img.icons8.com/?size=100&id=xQhdw8TF7PO2&format=png&color=000000', iconSize: [20, 20] })
         };
 
         var locations = [
@@ -67,21 +154,63 @@
             ["Meditrina Hospital", 22.78802214, 86.1691, "hospital", "9534343434"],
             ["Kantilal Gandhi Hospital", 22.78750779, 86.17772, "hospital", "08797110700"],
             ["Tata Main Hospital", 22.801547197681046, 86.17974662705578, "hospital", "06576641122"],
+            ["Brahmananda Narayana Multispeciality Hospital", 22.805672, 86.202518, "hospital", "06576651000"],
+            ["Mercy Hospital Jamshedpur", 22.796423, 86.225341, "hospital", "06572230600"],
+            ["MGM Medical College & Hospital", 22.775342, 86.159872, "hospital", "06572360033"],
             ["Adityapur Police Station", 22.7845383, 86.163, "police", "0657 237 2666"],
             ["Gamharia Thana", 22.83177187, 86.08271, "police", "096532 53698"],
             ["Adityapur Thana 2", 22.81639642, 86.10207, "police", "09431706535"],
             ["Kandra Police Station", 22.8557856, 86.05071, "police", "06597-255380"],
+            ["Sakchi Police Station", 22.804521, 86.203115, "police", "06572430036"],
+            ["Bistupur Police Station", 22.795632, 86.174521, "police", "06572370315"],
+            ["Telco Police Station", 22.824513, 86.218743, "police", "06572286700"],
             ["Rohit Singh Ambulance Service", 22.7732752, 86.15854, "ambulance", "9876543218"],
             ["RED Ambulance Service", 22.79479949, 86.14412, "ambulance", "040 4189 1299"],
-	        ["TMH Ambulance Service", 22.801553379184753, 86.17997930868256, "ambulance", "06576641233"],
+            ["TMH Ambulance Service", 22.801553379184753, 86.17997930868256, "ambulance", "06576641233"],
+            ["Jamshedpur Ambulance", 22.803214, 86.190876, "ambulance", "09334345678"],
+            ["Adityapur Emergency Ambulance", 22.789654, 86.154321, "ambulance", "08210012345"],
             ["Fire Station Adityapur", 22.790380715813775, 86.15281465157102, "fire", "9304953415"],
             ["Fire Station Jamshedpur", 22.79978714, 86.21725, "fire", "06572431036"],
+            ["Sakchi Fire Station", 22.805123, 86.205678, "fire", "06572431234"],
             ["Jamshedpur Blood Bank", 22.80573476, 86.18173, "hospital", "06572431957"],
-            ["Indian Red Cross Society", 22.79409109, 86.1831, "hospital", "09431303933"]
+            ["Indian Red Cross Society", 22.79409109, 86.1831, "hospital", "09431303933"],
+            ["TSUISL Help - Brajesh Singh", 22.785866, 86.165484, "tsuilHelp", "09001234567"],
+            ["TSUISL Help - Rahul Satpati", 22.785992956465375, 86.16499604169758, "tsuilHelp", "7004563060"],
+            ["TSUISL Help - Tata Steel UISL Control Room", 22.80414698494359, 86.18323032902764, "tsuilHelp", "9234554953"],
+            // Substations
+            ["Ph-1 S/S", 22.7852528, 86.137317, "substation", "N/A"],
+            ["Ph-2 S/S", 22.7892343, 86.1499, "substation", "N/A"],
+            ["Ph-4 S/S", 22.8038139, 86.106203, "substation", "N/A"],
+            ["Ph-5 S/S", 22.8201228, 86.086987, "substation", "N/A"],
+            ["Ph-6 S/S", 22.7970361, 86.121753, "substation", "N/A"],
+            ["Ph-7 S/S", 22.7970151, 86.129073, "substation", "N/A"],
+            ["EMC S/S", 22.7999917, 86.135672, "substation", "N/A"],
+            ["Birbans S/S", 22.8003222, 86.035714, "substation", "N/A"],
+            ["Seraikela S/S", 22.7230417, 85.956564, "substation", "N/A"],
+            ["LS S/S", 22.8142021, 86.082526, "substation", "N/A"],
+            ["TGS 132/33kV S/S", 22.815151528555344, 86.08180667013849, "substation", "N/A"],
+            // Offices
+            ["TSUISL Office, JIADA Campus", 22.785866, 86.165484, "office", "N/A"],
+            ["TSUISL Main Office", 22.8040079, 86.183406, "office", "N/A"],
+            // Emergency Services Near Substations & Offices
+            ["Kolabira Hospital", 22.788358843258987, 86.03000332229624, "hospital", "06571234588"],
+            ["Seraikela District Hospital", 22.709550872792605, 85.94226828606325, "hospital", "06571234591"],
+            ["Seraikela Police Station", 22.702086353096902, 85.93420268897985, "police", "06571234592"],
+            // New Emergency Contacts Near TGS
+            ["Fire Station Tata Growth Shop", 22.826762689882052, 86.08857570603382, "fire", "8092086115"],
+            ["Fire Station (Inside Tata Steel)", 22.79987250039067, 86.19035263017194, "fire", "06576643948"],
+            ["Ambulance TGS", 22.825927446702156, 86.0868143150713, "ambulance", "9297953081"],
+            ["Tata Growth Shop Dispensary", 22.82917498175364, 86.08949577377298, "hospital", "06576511376"],
+            ["Sai Nursing Home", 22.786727850505258, 86.16392769033307, "hospital", "0657657069"],
+            ["Safety Professional", 22.814548618909605, 86.08243368799697, "tsuilHelp", "092636330098"],
+            ["TGS TSUISL Control Room", 22.814261415044484, 86.08223140602765, "tsuilHelp", "9234554953"],
+            ["Security Control Room", 22.804523248704697, 86.18344487370878, "tsuilHelp", "06576652271"],
+            ["Sectional Incharge", 22.815049657800813, 86.082711109564, "tsuilHelp", "9204652910"]
         ];
 
         var markers = [];
         var userLocation = null;
+        var userMarker = null;
 
         function calculateDistance(lat1, lon1, lat2, lon2) {
             var R = 6371; // Radius of Earth in km
@@ -94,32 +223,50 @@
             return (R * c).toFixed(2); // Distance in km
         }
 
+        function getPopupContent(item) {
+            var distance = userLocation ? calculateDistance(userLocation[0], userLocation[1], item.lat, item.lon) : "N/A";
+            return `
+                <b style="font-size: 1.1rem; color: #007bff;">${item.name}</b><br>
+                ${item.phone !== "N/A" ? `📞 <a href="tel:${item.phone}" style="color: #28a745; text-decoration: none;">${item.phone}</a><br>` : ""}
+                📍 <a href="https://www.google.com/maps?q=${item.lat},${item.lon}" target="_blank" style="color: #dc3545; text-decoration: none;">View on Google Maps</a><br>
+                📏 <span style="color: #6c757d;">Distance: ${distance} km</span>
+            `;
+        }
+
         function updatePopups() {
             markers.forEach(function (item) {
-                if (userLocation) {
-                    var distance = calculateDistance(userLocation[0], userLocation[1], item.lat, item.lon);
-                    item.marker.bindPopup(`
-                        <b>${item.name}</b><br>
-                        📞 <a href="tel:${item.phone}">${item.phone}</a><br>
-                        📍 <a href="https://www.google.com/maps?q=${item.lat},${item.lon}" target="_blank">View on Google Maps</a><br>
-                        📏 Distance: ${distance} km
-                    `);
+                item.marker.bindPopup(getPopupContent(item));
+                if (item.marker.isPopupOpen()) {
+                    item.marker.setPopupContent(getPopupContent(item));
                 }
             });
         }
 
         locations.forEach(function (loc) {
             var marker = L.marker([loc[1], loc[2]], { icon: icons[loc[3]] }).addTo(map);
-            
-            marker.bindPopup("<b>" + loc[0] + "</b><br>📞 <a href='tel:" + loc[4] + "'>" + loc[4] + "</a><br>" +
-                             "📍 <a href='https://www.google.com/maps?q=" + loc[1] + "," + loc[2] + "' target='_blank'>View on Google Maps</a>");
-            
-            L.marker([loc[1], loc[2]], { icon: icons[loc[3]] }).bindTooltip(loc[0], { permanent: true, direction: "top", className: "label" }).addTo(map);
-            
-            markers.push({ marker: marker, name: loc[0].toLowerCase(), lat: loc[1], lon: loc[2], phone: loc[4] });
+            marker.bindPopup(getPopupContent({ name: loc[0], lat: loc[1], lon: loc[2], phone: loc[4] }));
+            markers.push({ marker: marker, name: loc[0], lat: loc[1], lon: loc[2], phone: loc[4], category: loc[3] });
         });
 
-        var userMarker;
+        // Initial call to set popups correctly
+        updatePopups();
+
+        function filterMarkers() {
+            var selectedCategory = document.getElementById('filterSelect').value;
+            markers.forEach(function (item) {
+                if (selectedCategory === 'all' || item.category === selectedCategory) {
+                    if (!map.hasLayer(item.marker)) {
+                        item.marker.addTo(map);
+                    }
+                } else {
+                    if (map.hasLayer(item.marker)) {
+                        map.removeLayer(item.marker);
+                    }
+                }
+            });
+            updatePopups(); // Update popups after filtering
+        }
+
         function updateLocation(position) {
             var lat = position.coords.latitude;
             var lng = position.coords.longitude;
@@ -130,42 +277,67 @@
                 userMarker.setLatLng([lat, lng]);
             } else {
                 userMarker = L.marker([lat, lng], { icon: icons.location }).addTo(map)
-                    .bindPopup("<b>You are here</b>")
-                    .openPopup();
+                    .bindPopup("<b style='color: #007bff;'>You are here</b>");
             }
 
-            map.setView([lat, lng], 14);
+            map.setView([lat, lng], 14); // Move map to current location
             updatePopups();
+            userMarker.openPopup(); // Open popup to indicate location
         }
 
-        function errorLocation() {
-            alert("Unable to access location. Please enable GPS.");
+        function errorLocation(error) {
+            switch(error.code) {
+                case error.PERMISSION_DENIED:
+                    alert("Location access denied. Please allow location permissions to use this feature.");
+                    break;
+                case error.POSITION_UNAVAILABLE:
+                    alert("Location information is unavailable.");
+                    break;
+                case error.TIMEOUT:
+                    alert("The request to get your location timed out.");
+                    break;
+                default:
+                    alert("An unknown error occurred while fetching your location.");
+                    break;
+            }
         }
 
-        if (navigator.geolocation) {
-            navigator.geolocation.watchPosition(updateLocation, errorLocation, { enableHighAccuracy: true });
+        function locateUser() {
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(updateLocation, errorLocation, {
+                    enableHighAccuracy: true,
+                    timeout: 10000, // 10 seconds timeout
+                    maximumAge: 0 // No cached position
+                });
+            } else {
+                alert("Geolocation is not supported by this browser.");
+            }
         }
 
-        // Search functionality
         document.getElementById("searchBox").addEventListener("keyup", function () {
             var searchText = this.value.toLowerCase();
             var resultsDiv = document.getElementById("searchResults");
-            resultsDiv.innerHTML = ""; resultsDiv.style.display = "none";
+            var selectedCategory = document.getElementById('filterSelect').value;
+            resultsDiv.innerHTML = "";
+            resultsDiv.style.display = "none";
 
             if (searchText.length > 0) {
                 markers.forEach(function (item) {
-                    if (item.name.includes(searchText)) {
+                    if (item.name.toLowerCase().includes(searchText) &&
+                        (selectedCategory === 'all' || item.category === selectedCategory)) {
                         var div = document.createElement("div");
-                        div.className = "search-item"; div.textContent = item.name;
-                        div.onclick = function () { map.setView(item.marker.getLatLng(), 15); item.marker.openPopup(); };
+                        div.className = "search-item";
+                        div.textContent = item.name;
+                        div.onclick = function () {
+                            map.setView(item.marker.getLatLng(), 15);
+                            item.marker.openPopup();
+                        };
                         resultsDiv.appendChild(div);
                         resultsDiv.style.display = "block";
                     }
                 });
             }
         });
-
     </script>
-
 </body>
 </html>
