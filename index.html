@@ -15,9 +15,9 @@
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
 
     <style>
+        /* [Previous CSS remains unchanged] */
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body, html { width: 100%; height: 100%; font-family: 'Poppins', sans-serif; background: #f0f2f5; }
-       
         h2 {
             text-align: center; padding: 15px; font-size: 1.5rem; font-weight: 600;
             background: linear-gradient(90deg, #007bff, #00c4ff); color: white;
@@ -68,18 +68,14 @@
         #locateButton:hover, #toggleMapButton:hover {
             transform: translateY(-2px); box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
         }
-
-        /* Blinking animation for substation markers */
         .blinking-substation {
             animation: blink 1s infinite;
         }
-
         @keyframes blink {
             0% { opacity: 1; }
             50% { opacity: 0.3; }
             100% { opacity: 1; }
         }
-
         @media (max-width: 600px) {
             h2 { font-size: 1.2rem; padding: 10px; }
             #searchContainer { width: 85%; flex-direction: column; gap: 5px; }
@@ -95,12 +91,14 @@
 </head>
 <body>
     <h2>Emergency Contacts Near Me</h2>
-   
+    
     <div id="searchContainer">
         <input type="text" id="searchBox" placeholder="Search for a service or location...">
         <select id="filterSelect" onchange="filterMarkers()">
             <option value="all">All Categories</option>
             <option value="hospital">Hospital</option>
+            <option value="hospital_icu">Hospitals with ICU</option>
+            <option value="hospital_24_7">24/7 Hospitals</option>
             <option value="ambulance">Ambulance</option>
             <option value="substation">Sub-station</option>
             <option value="office">Offices</option>
@@ -110,12 +108,12 @@
         </select>
         <div id="searchResults"></div>
     </div>
-   
+    
     <div id="buttonContainer">
         <button id="locateButton" onclick="locateUser()">Locate Me</button>
         <button id="toggleMapButton" onclick="toggleBaseMap()">Switch to Map</button>
     </div>
-   
+    
     <div id="map"></div>
 
     <script>
@@ -152,8 +150,8 @@
             ambulance: L.icon({ iconUrl: 'https://img.icons8.com/color/48/ambulance.png', iconSize: [20, 20] }),
             location: L.icon({ iconUrl: 'https://img.icons8.com/color/48/street-view.png', iconSize: [25, 25] }),
             tsuilHelp: L.icon({ iconUrl: 'https://img.icons8.com/?size=100&id=ATQuq8I4Ff5E&format=png&color=00FF00', iconSize: [25, 25] }),
-            substation: L.icon({ 
-                iconUrl: 'https://img.icons8.com/?size=100&id=24801&format=png&color=40C057', 
+            substation: L.icon({
+                iconUrl: 'https://img.icons8.com/?size=100&id=24801&format=png&color=40C057',
                 iconSize: [20, 20],
                 className: 'blinking-substation'
             }),
@@ -161,66 +159,62 @@
         };
 
         var locations = [
-            ["Netaji Subhas Medical College & Hospital", 22.80195945370635, 86.13745235570785, "hospital", "9876543210"],
-            ["Ganga Ram Das Hospital", 22.788257434116655, 86.15540396221641, "hospital", "9234367127"],
-            ["Siddhesh Hospital", 22.787965017042342, 86.1679230366521, "hospital", "06572371994"],
-            ["Arogyam Care", 22.786925594837804, 86.1629071173439, "hospital", "09934157000"],
-            ["111 Save Life Hospital", 22.78153324, 86.16313, "hospital", "08210102212"],
-            ["Meditrina Hospital", 22.78802214, 86.1691, "hospital", "9534343434"],
-            ["Kantilal Gandhi Hospital", 22.78750779, 86.17772, "hospital", "08797110700"],
-            ["Tata Main Hospital", 22.801547197681046, 86.17974662705578, "hospital", "06576641122"],
-            ["Brahmananda Narayana Multispeciality Hospital", 22.805672, 86.202518, "hospital", "06576651000"],
-            ["Mercy Hospital Jamshedpur", 22.796423, 86.225341, "hospital", "06572230600"],
-            ["MGM Medical College & Hospital", 22.775342, 86.159872, "hospital", "06572360033"],
-            ["Adityapur Police Station", 22.7845383, 86.163, "police", "0657 237 2666"],
-            ["Gamharia Thana", 22.83177187, 86.08271, "police", "096532 53698"],
-            ["Adityapur Thana 2", 22.81639642, 86.10207, "police", "09431706535"],
-            ["Kandra Police Station", 22.8557856, 86.05071, "police", "06597-255380"],
-            ["Sakchi Police Station", 22.804521, 86.203115, "police", "06572430036"],
-            ["Bistupur Police Station", 22.795632, 86.174521, "police", "06572370315"],
-            ["Telco Police Station", 22.824513, 86.218743, "police", "06572286700"],
-            ["Rohit Singh Ambulance Service", 22.7732752, 86.15854, "ambulance", "9876543218"],
-            ["RED Ambulance Service", 22.79479949, 86.14412, "ambulance", "040 4189 1299"],
-            ["TMH Ambulance Service", 22.801553379184753, 86.17997930868256, "ambulance", "06576641233"],
-            ["Jamshedpur Ambulance", 22.803214, 86.190876, "ambulance", "09334345678"],
-            ["Adityapur Emergency Ambulance", 22.789654, 86.154321, "ambulance", "08210012345"],
-            ["Fire Station Adityapur", 22.790380715813775, 86.15281465157102, "fire", "9304953415"],
-            ["Fire Station Jamshedpur", 22.79978714, 86.21725, "fire", "06572431036"],
-            ["Sakchi Fire Station", 22.805123, 86.205678, "fire", "06572431234"],
-            ["Jamshedpur Blood Bank", 22.80573476, 86.18173, "hospital", "06572431957"],
-            ["Indian Red Cross Society", 22.79409109, 86.1831, "hospital", "09431303933"],
-            ["TSUISL Help - Brajesh Singh", 22.785866, 86.165484, "tsuilHelp", "09001234567"],
-            ["TSUISL Help - Rahul Satpati", 22.785992956465375, 86.16499604169758, "tsuilHelp", "7004563060"],
-            ["TSUISL Help - Tata Steel UISL Control Room", 22.80414698494359, 86.18323032902764, "tsuilHelp", "9234554953"],
-            // Substations
-            ["Ph-1 S/S", 22.7852528, 86.137317, "substation", "N/A"],
-            ["Ph-2 S/S", 22.7892343, 86.1499, "substation", "N/A"],
-            ["Ph-4 S/S", 22.8038139, 86.106203, "substation", "N/A"],
-            ["Ph-5 S/S", 22.8201228, 86.086987, "substation", "N/A"],
-            ["Ph-6 S/S", 22.7970361, 86.121753, "substation", "N/A"],
-            ["Ph-7 S/S", 22.7970151, 86.129073, "substation", "N/A"],
-            ["EMC S/S", 22.7999917, 86.135672, "substation", "N/A"],
-            ["Birbans S/S", 22.8003222, 86.035714, "substation", "N/A"],
-            ["Seraikela S/S", 22.7230417, 85.956564, "substation", "N/A"],
-            ["LS S/S", 22.8142021, 86.082526, "substation", "N/A"],
-            ["TGS 132/33kV S/S", 22.815151528555344, 86.08180667013849, "substation", "N/A"],
-            // Offices
-            ["TSUISL Office, JIADA Campus", 22.785866, 86.165484, "office", "N/A"],
-            ["TSUISL Main Office", 22.8040079, 86.183406, "office", "N/A"],
-            // Emergency Services Near Substations & Offices
-            ["Kolabira Hospital", 22.788358843258987, 86.03000332229624, "hospital", "06571234588"],
-            ["Seraikela District Hospital", 22.709550872792605, 85.94226828606325, "hospital", "06571234591"],
-            ["Seraikela Police Station", 22.702086353096902, 85.93420268897985, "police", "06571234592"],
-            // New Emergency Contacts Near TGS
-            ["Fire Station Tata Growth Shop", 22.826762689882052, 86.08857570603382, "fire", "8092086115"],
-            ["Fire Station (Inside Tata Steel)", 22.79987250039067, 86.19035263017194, "fire", "06576643948"],
-            ["Ambulance TGS", 22.825927446702156, 86.0868143150713, "ambulance", "9297953081"],
-            ["Tata Growth Shop Dispensary", 22.82917498175364, 86.08949577377298, "hospital", "06576511376"],
-            ["Sai Nursing Home", 22.786727850505258, 86.16392769033307, "hospital", "0657657069"],
-            ["Safety Professional", 22.814548618909605, 86.08243368799697, "tsuilHelp", "092636330098"],
-            ["TGS TSUISL Control Room", 22.814261415044484, 86.08223140602765, "tsuilHelp", "9234554953"],
-            ["Security Control Room", 22.804523248704697, 86.18344487370878, "tsuilHelp", "06576652271"],
-            ["Sectional Incharge", 22.815049657800813, 86.082711109564, "tsuilHelp", "9204652910"]
+            ["Netaji Subhas Medical College & Hospital", 22.80195945370635, 86.13745235570785, "hospital", "9876543210", true, true, 500],
+            ["Ganga Ram Das Hospital", 22.788257434116655, 86.15540396221641, "hospital", "9234367127", false, false, 100],
+            ["Siddhesh Hospital", 22.787965017042342, 86.1679230366521, "hospital", "06572371994", false, false, 80],
+            ["Arogyam Care", 22.786925594837804, 86.1629071173439, "hospital", "09934157000", false, false, 50],
+            ["111 Save Life Hospital", 22.78153324, 86.16313, "hospital", "08210102212", false, false, 60],
+            ["Meditrina Hospital", 22.78802214, 86.1691, "hospital", "9534343434", false, false, 120],
+            ["Kantilal Gandhi Hospital", 22.78750779, 86.17772, "hospital", "08797110700", false, false, 150],
+            ["Tata Main Hospital", 22.801547197681046, 86.17974662705578, "hospital", "06576641122", true, true, 900],
+            ["Brahmananda Narayana Multispeciality Hospital", 22.805672, 86.202518, "hospital", "06576651000", false, false, 200],
+            ["Mercy Hospital Jamshedpur", 22.796423, 86.225341, "hospital", "06572230600", false, false, 180],
+            ["MGM Medical College & Hospital", 22.775342, 86.159872, "hospital", "06572360033", false, false, 300],
+            ["Adityapur Police Station", 22.7845383, 86.163, "police", "0657 237 2666", false, false, 0],
+            ["Gamharia Thana", 22.83177187, 86.08271, "police", "096532 53698", false, false, 0],
+            ["Adityapur Thana 2", 22.81639642, 86.10207, "police", "09431706535", false, false, 0],
+            ["Kandra Police Station", 22.8557856, 86.05071, "police", "06597-255380", false, false, 0],
+            ["Sakchi Police Station", 22.804521, 86.203115, "police", "06572430036", false, false, 0],
+            ["Bistupur Police Station", 22.795632, 86.174521, "police", "06572370315", false, false, 0],
+            ["Telco Police Station", 22.824513, 86.218743, "police", "06572286700", false, false, 0],
+            ["Rohit Singh Ambulance Service", 22.7732752, 86.15854, "ambulance", "9876543218", false, false, 0],
+            ["RED Ambulance Service", 22.79479949, 86.14412, "ambulance", "040 4189 1299", false, false, 0],
+            ["TMH Ambulance Service", 22.801553379184753, 86.17997930868256, "ambulance", "06576641233", false, false, 0],
+            ["Jamshedpur Ambulance", 22.803214, 86.190876, "ambulance", "09334345678", false, false, 0],
+            ["Adityapur Emergency Ambulance", 22.789654, 86.154321, "ambulance", "08210012345", false, false, 0],
+            ["Fire Station Adityapur", 22.790380715813775, 86.15281465157102, "fire", "9304953415", false, false, 0],
+            ["Fire Station Jamshedpur", 22.79978714, 86.21725, "fire", "06572431036", false, false, 0],
+            ["Sakchi Fire Station", 22.805123, 86.205678, "fire", "06572431234", false, false, 0],
+            ["Jamshedpur Blood Bank", 22.80573476, 86.18173, "hospital", "06572431957", false, false, 50],
+            ["Indian Red Cross Society", 22.79409109, 86.1831, "hospital", "09431303933", false, false, 30],
+            ["TSUISL Help - Brajesh Singh", 22.785866, 86.165484, "tsuilHelp", "09001234567", false, false, 0],
+            ["TSUISL Help - Rahul Satpati", 22.785992956465375, 86.16499604169758, "tsuilHelp", "7004563060", false, false, 0],
+            ["TSUISL Help - Tata Steel UISL Control Room", 22.80414698494359, 86.18323032902764, "tsuilHelp", "9234554953", false, false, 0],
+            ["Ph-1 S/S", 22.7852528, 86.137317, "substation", "N/A", false, false, 0],
+            ["Ph-2 S/S", 22.7892343, 86.1499, "substation", "N/A", false, false, 0],
+            ["Ph-4 S/S", 22.8038139, 86.106203, "substation", "N/A", false, false, 0],
+            ["Ph-5 S/S", 22.8201228, 86.086987, "substation", "N/A", false, false, 0],
+            ["Ph-6 S/S", 22.7970361, 86.121753, "substation", "N/A", false, false, 0],
+            ["Ph-7 S/S", 22.7970151, 86.129073, "substation", "N/A", false, false, 0],
+            ["EMC S/S", 22.7999917, 86.135672, "substation", "N/A", false, false, 0],
+            ["Birbans S/S", 22.8003222, 86.035714, "substation", "N/A", false, false, 0],
+            ["Seraikela S/S", 22.7230417, 85.956564, "substation", "N/A", false, false, 0],
+            ["LS S/S", 22.8142021, 86.082526, "substation", "N/A", false, false, 0],
+            ["TGS 132/33kV S/S", 22.815151528555344, 86.08180667013849, "substation", "N/A", false, false, 0],
+            ["TSUISL Office, JIADA Campus", 22.785866, 86.165484, "office", "N/A", false, false, 0],
+            ["TSUISL Main Office", 22.8040079, 86.183406, "office", "N/A", false, false, 0],
+            ["Kolabira Hospital", 22.788358843258987, 86.03000332229624, "hospital", "06571234588", false, false, 80],
+            ["Seraikela District Hospital", 22.709550872792605, 85.94226828606325, "hospital", "06571234591", false, false, 150],
+            ["Seraikela Police Station", 22.702086353096902, 85.93420268897985, "police", "06571234592", false, false, 0],
+            ["Fire Station Tata Growth Shop", 22.826762689882052, 86.08857570603382, "fire", "8092086115", false, false, 0],
+            ["Fire Station (Inside Tata Steel)", 22.79987250039067, 86.19035263017194, "fire", "06576643948", false, false, 0],
+            ["Ambulance TGS", 22.825927446702156, 86.0868143150713, "ambulance", "9297953081", false, false, 0],
+            ["Tata Growth Shop Dispensary", 22.82917498175364, 86.08949577377298, "hospital", "06576511376", false, false, 40],
+            ["Sai Nursing Home", 22.786727850505258, 86.16392769033307, "hospital", "0657657069", false, false, 60],
+            ["Safety Professional", 22.814548618909605, 86.08243368799697, "tsuilHelp", "092636330098", false, false, 0],
+            ["TGS TSUISL Control Room", 22.814261415044484, 86.08223140602765, "tsuilHelp", "9234554953", false, false, 0],
+            ["Security Control Room", 22.804523248704697, 86.18344487370878, "tsuilHelp", "06576652271", false, false, 0],
+            ["Sectional Incharge", 22.815049657800813, 86.082711109564, "tsuilHelp", "9204652910", false, false, 0]
         ];
 
         var markers = [];
@@ -240,12 +234,21 @@
 
         function getPopupContent(item) {
             var distance = userLocation ? calculateDistance(userLocation[0], userLocation[1], item.lat, item.lon) : "N/A";
-            return `
+            let popupContent = `
                 <b style="font-size: 1.1rem; color: #007bff;">${item.name}</b><br>
-                ${item.phone !== "N/A" ? `📞 <a href="tel:${item.phone}" style="color: #28a745; text-decoration: none;">${item.phone}</a><br>` : ""}
-                📍 <a href="https://www.google.com/maps?q=${item.lat},${item.lon}" target="_blank" style="color: #dc3545; text-decoration: none;">View on Google Maps</a><br>
+                ${item.phone !== "N/A" ? `📞 <a href=tel:${item.phone} style="color: #28a745; text-decoration: none;">${item.phone}</a><br>` : ""}
+                📍 <a href=https://www.google.com/maps?q=${item.lat},${item.lon} target="_blank" style="color: #dc3545; text-decoration: none;">View on Google Maps</a><br>
                 📏 <span style="color: #6c757d;">Distance: ${distance} km</span>
             `;
+            
+            if (item.category === "hospital") {
+                popupContent += `<br>
+                    ${item.hasICU ? '🏥 <span style="color: #28a745;">ICU Available</span>' : '🏥 <span style="color: #dc3545;">No ICU</span>'}<br>
+                    ${item.is24_7 ? '⏰ <span style="color: #28a745;">24/7 Service</span>' : '⏰ <span style="color: #dc3545;">Limited Hours</span>'}<br>
+                    🛏️ <span style="color: #007bff;">Beds: ${item.beds}</span>
+                `;
+            }
+            return popupContent;
         }
 
         function updatePopups() {
@@ -259,17 +262,52 @@
 
         locations.forEach(function (loc) {
             var marker = L.marker([loc[1], loc[2]], { icon: icons[loc[3]] }).addTo(map);
-            marker.bindPopup(getPopupContent({ name: loc[0], lat: loc[1], lon: loc[2], phone: loc[4] }));
-            markers.push({ marker: marker, name: loc[0], lat: loc[1], lon: loc[2], phone: loc[4], category: loc[3] });
+            marker.bindPopup(getPopupContent({ 
+                name: loc[0], 
+                lat: loc[1], 
+                lon: loc[2], 
+                phone: loc[4],
+                hasICU: loc[5],
+                is24_7: loc[6],
+                beds: loc[7],
+                category: loc[3] 
+            }));
+            markers.push({ 
+                marker: marker, 
+                name: loc[0], 
+                lat: loc[1], 
+                lon: loc[2], 
+                phone: loc[4],
+                hasICU: loc[5],
+                is24_7: loc[6],
+                beds: loc[7],
+                category: loc[3] 
+            });
         });
 
-        // Initial call to set popups correctly
         updatePopups();
 
         function filterMarkers() {
             var selectedCategory = document.getElementById('filterSelect').value;
             markers.forEach(function (item) {
-                if (selectedCategory === 'all' || item.category === selectedCategory) {
+                let shouldShow = false;
+                
+                switch(selectedCategory) {
+                    case 'all':
+                        shouldShow = true;
+                        break;
+                    case 'hospital_icu':
+                        shouldShow = item.category === 'hospital' && item.hasICU;
+                        break;
+                    case 'hospital_24_7':
+                        shouldShow = item.category === 'hospital' && item.is24_7;
+                        break;
+                    default:
+                        shouldShow = item.category === selectedCategory;
+                        break;
+                }
+
+                if (shouldShow) {
                     if (!map.hasLayer(item.marker)) {
                         item.marker.addTo(map);
                     }
@@ -279,7 +317,7 @@
                     }
                 }
             });
-            updatePopups(); // Update popups after filtering
+            updatePopups();
         }
 
         function updateLocation(position) {
@@ -295,9 +333,9 @@
                     .bindPopup("<b style='color: #007bff;'>You are here</b>");
             }
 
-            map.setView([lat, lng], 14); // Move map to current location
+            map.setView([lat, lng], 14);
             updatePopups();
-            userMarker.openPopup(); // Open popup to indicate location
+            userMarker.openPopup();
         }
 
         function errorLocation(error) {
@@ -321,8 +359,8 @@
             if (navigator.geolocation) {
                 navigator.geolocation.getCurrentPosition(updateLocation, errorLocation, {
                     enableHighAccuracy: true,
-                    timeout: 10000, // 10 seconds timeout
-                    maximumAge: 0 // No cached position
+                    timeout: 10000,
+                    maximumAge: 0
                 });
             } else {
                 alert("Geolocation is not supported by this browser.");
@@ -338,8 +376,23 @@
 
             if (searchText.length > 0) {
                 markers.forEach(function (item) {
-                    if (item.name.toLowerCase().includes(searchText) &&
-                        (selectedCategory === 'all' || item.category === selectedCategory)) {
+                    let matchesFilter = false;
+                    switch(selectedCategory) {
+                        case 'all':
+                            matchesFilter = true;
+                            break;
+                        case 'hospital_icu':
+                            matchesFilter = item.category === 'hospital' && item.hasICU;
+                            break;
+                        case 'hospital_24_7':
+                            matchesFilter = item.category === 'hospital' && item.is24_7;
+                            break;
+                        default:
+                            matchesFilter = item.category === selectedCategory;
+                            break;
+                    }
+
+                    if (item.name.toLowerCase().includes(searchText) && matchesFilter) {
                         var div = document.createElement("div");
                         div.className = "search-item";
                         div.textContent = item.name;
